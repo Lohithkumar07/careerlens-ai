@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CareerLens – resume role and skill-gap analyzer</title>
+<meta name="description" content="Paste your resume to see which roles it points to, which skills it shows, and what a job description needs that you haven't shown yet.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230e8f7e'/%3E%3Ccircle cx='15' cy='15' r='6' fill='none' stroke='white' stroke-width='3'/%3E%3Cpath d='M20 20l6 6' stroke='white' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#12212f; --slate:#55616f; --paper:#f6f8fa; --card:#ffffff; --line:#d9e0e7;
+  --signal:#0e8f7e; --signal-soft:#dff3ef; --gap:#c7731a; --gap-soft:#fbeedd; --danger:#b3261e;
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",system-ui,sans-serif;
+  --body:"Instrument Sans","Segoe UI",system-ui,-apple-system,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ink:#e8eef4; --slate:#9aa7b5; --paper:#0f1a24; --card:#162330; --line:#27384a;
+    --signal:#3cc7b3; --signal-soft:#123a36; --gap:#f0a24f; --gap-soft:#3a2a14; --danger:#ff8a80;
+  }
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.55 var(--body)}
+.wrap{max-width:1120px;margin:0 auto;padding:clamp(20px,4vw,48px) clamp(16px,3vw,32px) 64px}
+header{margin-bottom:32px;max-width:640px}
+.brand{font:700 18px var(--display);display:flex;align-items:center;gap:10px;margin-bottom:28px}
+.brand i{width:26px;height:26px;border-radius:7px;background:var(--signal);display:inline-block;position:relative}
+.brand i::after{content:"";position:absolute;inset:6px;border:3px solid #fff;border-radius:50%;box-sizing:border-box;width:12px;height:12px}
+h1{font:700 clamp(30px,5vw,48px)/1.08 var(--display);letter-spacing:-.02em;margin:0 0 14px}
+header p{margin:0;color:var(--slate);font-size:17px;max-width:56ch}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:28px;align-items:start}
+@media(max-width:860px){.grid{grid-template-columns:1fr}}
+label{display:block;font-weight:600;font-size:14px;margin:0 0 6px}
+.hint{font-weight:400;color:var(--slate)}
+textarea,select{width:100%;font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+textarea{resize:vertical;min-height:190px;line-height:1.5}
+textarea.short{min-height:110px}
+textarea:focus-visible,select:focus-visible,button:focus-visible{outline:3px solid var(--signal);outline-offset:2px}
+.field{margin-bottom:18px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+button{font:600 15px var(--body);border-radius:10px;padding:12px 20px;cursor:pointer;border:1px solid transparent}
+.primary{background:var(--signal);color:#fff}
+.primary:hover{filter:brightness(.94)}
+.primary[disabled]{opacity:.6;cursor:progress}
+.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+.ghost:hover{background:var(--card)}
+.count{margin-left:auto;font-size:13px;color:var(--slate)}
+#out{min-height:240px}
+.empty{border:1px dashed var(--line);border-radius:14px;padding:28px;color:var(--slate)}
+.empty strong{display:block;color:var(--ink);font:700 20px var(--display);margin-bottom:6px}
+.err{border:1px solid var(--danger);color:var(--danger);border-radius:12px;padding:14px 16px;background:var(--card)}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px;margin-bottom:16px}
+h2{font:700 20px var(--display);margin:0 0 4px;letter-spacing:-.01em}
+.sub{color:var(--slate);font-size:14px;margin:0 0 14px}
+.score{display:flex;align-items:baseline;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+.score b{font:700 56px/1 var(--display);letter-spacing:-.03em}
+.score span{font-weight:600}
+.ruler{display:flex;gap:4px;margin:6px 0 12px}
+.ruler i{flex:1;height:22px;border-radius:4px;background:var(--signal)}
+.ruler i.miss{background:transparent;border:2px solid var(--gap)}
+.legend{display:flex;gap:18px;font-size:13px;color:var(--slate);flex-wrap:wrap}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;background:var(--signal);margin-right:6px;vertical-align:-1px}
+.legend i.miss{background:transparent;border:2px solid var(--gap)}
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin:0;padding:0;list-style:none}
+.chip{padding:4px 11px;border-radius:999px;font-size:14px;background:var(--signal-soft);color:var(--ink)}
+.chip.miss{background:var(--gap-soft)}
+.chip.plain{background:var(--paper);border:1px solid var(--line)}
+.group{margin-top:14px}
+.group h3{font:600 13px var(--body);color:var(--slate);margin:0 0 7px}
+.bar{display:grid;grid-template-columns:minmax(120px,190px) 1fr 52px;gap:12px;align-items:center;margin:9px 0;font-size:14.5px}
+.bar .track{height:10px;background:var(--paper);border-radius:6px;overflow:hidden;border:1px solid var(--line)}
+.bar .fill{height:100%;background:var(--signal);border-radius:6px}
+.bar:not(:first-child) .fill{background:var(--slate);opacity:.55}
+.bar span:last-child{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+@media(max-width:480px){.bar{grid-template-columns:1fr 52px}.bar .track{grid-column:1/-1;order:3}}
+.foot{margin-top:40px;color:var(--slate);font-size:13px;max-width:70ch}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand"><i aria-hidden="true"></i>CareerLens</div>
+    <h1>See which roles your resume points to</h1>
+    <p>Paste your resume. Add a job description to see which required skills you already show and which are missing.</p>
+  </header>
+
+  <div class="grid">
+    <section aria-label="Inputs">
+      <div class="field">
+        <label for="resume">Resume text</label>
+        <textarea id="resume" placeholder="Skills, projects, internships, education…" maxlength="20000"></textarea>
+      </div>
+      <div class="field">
+        <label for="jd">Job description <span class="hint">(optional)</span></label>
+        <textarea id="jd" class="short" placeholder="Paste the posting you want to match against" maxlength="20000"></textarea>
+      </div>
+      <div class="field">
+        <label for="role">Or compare with a role <span class="hint">(used when no job description is pasted)</span></label>
+        <select id="role"><option value="">No target role</option></select>
+      </div>
+      <div class="row">
+        <button id="go" class="primary" type="button">Analyze resume</button>
+        <button id="sample" class="ghost" type="button">Use sample resume</button>
+        <span class="count" id="count" aria-live="polite"></span>
+      </div>
+    </section>
+
+    <section id="out" aria-live="polite" aria-label="Results">
+      <div class="empty"><strong>Your analysis shows up here</strong>Start with the sample resume to see how the results look.</div>
+    </section>
+  </div>
+
+  <p class="foot">The role model is a TF-IDF + logistic regression classifier trained on synthetic resumes, so treat the percentages as a guide to your resume's wording, not a hiring prediction. Nothing you paste is stored.</p>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const SAMPLE = {
+  resume: "Final year B.E. Computer Science student. Skills: Python, pandas, numpy, scikit-learn, TensorFlow, SQL, matplotlib, Git, Docker. Projects: built a U-Net deep learning model for medical image segmentation, trained detection models with OpenCV, and deployed a FastAPI inference service on AWS. Experience: internship building dashboards and analyzing customer churn with statistics and feature engineering. Completed a prompt engineering certification and took part in hackathons.",
+  jd: "Machine Learning Engineer. You will train and deploy deep learning models. Requirements: Python, PyTorch, TensorFlow, Docker, Kubernetes, AWS, MLOps, CI/CD, FastAPI and machine learning fundamentals."
+};
+
+function el(tag, attrs = {}, ...kids) {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) k === "class" ? (n.className = v) : n.setAttribute(k, v);
+  for (const kid of kids) n.append(kid);
+  return n;
+}
+const chips = (items, cls = "") => {
+  const ul = el("ul", { class: "chips" });
+  items.forEach((t) => ul.append(el("li", { class: "chip " + cls }, t)));
+  return ul;
+};
+
+function render(d) {
+  const out = $("out");
+  out.replaceChildren();
+
+  if (d.match && d.match.score !== null) {
+    const m = d.match, total = m.matched_skills.length + m.missing_skills.length;
+    const ruler = el("div", { class: "ruler", role: "img", "aria-label": `${m.matched_skills.length} of ${total} required skills shown` });
+    m.matched_skills.forEach(() => ruler.append(el("i")));
+    m.missing_skills.forEach(() => ruler.append(el("i", { class: "miss" })));
+    const panel = el("div", { class: "panel" },
+      el("h2", {}, "Match against the " + m.source),
+      el("div", { class: "score" }, el("b", {}, String(m.score)), el("span", {}, m.grade)),
+      ruler,
+      el("div", { class: "legend" },
+        el("span", {}, el("i"), `${m.matched_skills.length} skills you show`),
+        el("span", {}, el("i", { class: "miss" }), `${m.missing_skills.length} not shown yet`)));
+    if (m.missing_skills.length) panel.append(el("div", { class: "group" }, el("h3", {}, "Add these if you have them"), chips(m.missing_skills, "miss")));
+    if (m.matched_skills.length) panel.append(el("div", { class: "group" }, el("h3", {}, "Already on your resume"), chips(m.matched_skills)));
+    out.append(panel);
+  } else if (d.match) {
+    out.append(el("div", { class: "panel" }, el("h2", {}, "Match"), el("p", { class: "sub" }, d.match.grade + ". Try a posting that lists specific tools.")));
+  }
+
+  const roles = el("div", { class: "panel" }, el("h2", {}, "Roles your resume points to"),
+    el("p", { class: "sub" }, "Model confidence based on the wording of your resume"));
+  d.predicted_roles.forEach((r) => {
+    const pct = Math.round(r.probability * 100);
+    const fill = el("div", { class: "fill" });
+    fill.style.width = Math.max(pct, 1) + "%";
+    roles.append(el("div", { class: "bar" }, el("span", {}, r.role), el("div", { class: "track" }, fill), el("span", {}, pct + "%")));
+  });
+  if (d.key_terms.length) roles.append(el("div", { class: "group" }, el("h3", {}, `Wording that points to ${d.top_role}`), chips(d.key_terms.map((k) => k.term), "plain")));
+  out.append(roles);
+
+  const skills = el("div", { class: "panel" }, el("h2", {}, `Skills found (${d.skills.length})`));
+  if (!d.skills.length) skills.append(el("p", { class: "sub" }, "No known skills detected. List tools by name, for example “Python, SQL, Docker”."));
+  const byCat = {};
+  d.skills.forEach((s) => (byCat[s.category] ||= []).push(s.name));
+  Object.entries(byCat).forEach(([cat, names]) => skills.append(el("div", { class: "group" }, el("h3", {}, cat), chips(names))));
+  out.append(skills);
+}
+
+function showError(msg) {
+  $("out").replaceChildren(el("div", { class: "err", role: "alert" }, msg));
+}
+
+async function analyze() {
+  const btn = $("go");
+  btn.disabled = true; btn.textContent = "Analyzing…";
+  try {
+    const res = await fetch("/api/analyze", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ resume: $("resume").value, job_description: $("jd").value, target_role: $("role").value })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) return showError(data.error || "Something went wrong. Try again.");
+    render(data);
+  } catch (e) {
+    showError("Couldn't reach the analysis service. Check your connection and try again.");
+  } finally {
+    btn.disabled = false; btn.textContent = "Analyze resume";
+  }
+}
+
+$("go").addEventListener("click", analyze);
+$("sample").addEventListener("click", () => { $("resume").value = SAMPLE.resume; $("jd").value = SAMPLE.jd; updateCount(); analyze(); });
+const updateCount = () => { const n = $("resume").value.length; $("count").textContent = n ? n.toLocaleString() + " characters" : ""; };
+$("resume").addEventListener("input", updateCount);
+
+fetch("/api/health").then((r) => r.json()).then((h) => {
+  (h.target_roles || []).forEach((r) => $("role").append(el("option", { value: r }, r)));
+}).catch(() => {});
+</script>
+</body>
+</html>
