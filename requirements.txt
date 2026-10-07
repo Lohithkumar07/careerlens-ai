@@ -1,0 +1,2 @@
+# Runtime has zero third-party dependencies (pure-Python inference).
+# Training / dev dependencies live in requirements-dev.txt.

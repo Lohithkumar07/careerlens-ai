@@ -1,0 +1,5 @@
+tests/
+training/
+.github/
+requirements-dev.txt
+dev_server.py
